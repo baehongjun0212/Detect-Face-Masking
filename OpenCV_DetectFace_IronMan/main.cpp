@@ -103,6 +103,37 @@ int main(int, char**)
 		Detector.process(GrayFrame);							// gray색으로 변경된 이미지를 process, 얼굴 인식
 		Detector.getObjects(Faces);								// getObjects를 통해 Faces vector에 검출된 이미지 저장
 
+		for (size_t i = 0; i < Faces.size(); i++)				// 인식된 얼굴 갯수에 따라 동작
+		{
+			// =========================================================
+			// 인식된 얼굴의 중앙을 알아내기 위해
+			Point center;		// 중앙의 위치를 저장하기 위한 center 변수 선언
+			Rect r = Faces[i];	// Faces 변수에 들어있는 인식된 얼굴을 순차적으로 r에 저장
+
+			//int radius;
+			center.x = cvRound((r.x + r.width*0.5));	// 인식된 얼굴의 x축 센터
+			center.y = cvRound((r.y + r.height*0.5));	// 인식된 얼굴의 y축 센터
+
+			// 인식된 얼굴에 사진을 띄우기 위해
+			float gain = 1.3f;										// 화면에 뜨는 이미지의 크기 비율을 변화 시키기 위함이다.
+			Mat floating_img_temp = imread("../data/iron_man.png");	// 아이언맨 사진 불러오기
+			Mat floating_img = imread("");							// 아이어맨 사진 크기 변경에 필요(얼굴이 카메라에 가까우면 커져야하고 멀어지면 작아져야하기 때문이다)
+			Mat mask_temp = imread("../data/iron_man.png", 0);		// 아이언맨 사진의 mask를 씌우기 위해
+			Mat mask = imread("");									// 아이언맨 사진 mask의 크기 변경에 필요(얼굴이 카메라에 가까우면 커져야하고 멀어지면 작아져야하기 때문이다)
+			resize(floating_img_temp, floating_img, Size((int)(Faces[i].width*gain), (int)(Faces[i].height*gain)), 0, 0, INTER_CUBIC);	// 얼굴이 카메라에 가까워짐에 따라 크기 변경
+			resize(mask_temp, mask, Size((int)(Faces[i].width*gain), (int)(Faces[i].height*gain)), 0, 0, INTER_CUBIC);					// mask의 크기를 유동적으로 변경하기 위해
+			try
+			{
+				int col = (int)(Faces[i].width*gain);	// 아이언맨 사이즈를 계산해야 하므로 인식된 얼굴 사이즈 col 계산
+				int row = (int)(Faces[i].height*gain);	// 아이언맨 사이즈를 계산해야 하므로 인식된 얼굴 사이즈 row 계산
+				Mat imageROI = ReferenceFrame(Rect(center.x - (col / 2), center.y - (row / 2), col, row));	// 이미지를 matrix 변수에 넣는다.
+
+				floating_img.copyTo(imageROI, mask);	// 이미지를 mask에 삽입
+			}
+			catch (Exception e)
+			{
+				printf("%s", e.what());	// 에러 뜰경우 try/catch문
+			}
 			// =========================================================
 		}
 		//waitKey(200);
